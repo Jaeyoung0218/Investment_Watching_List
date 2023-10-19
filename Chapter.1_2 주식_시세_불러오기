@@ -1,65 +1,73 @@
 import pandas as pd
 import requests
 from bs4 import BeautifulSoup
-from matplotlib import pyplot as plt
-
-if response.status_code == 200:
-    html = response.text
-    bs = BeautifulSoup(html, 'lxml')
-    pgrr = bs.find('td', class_='pgRR')
-    
-code = '389500'      # 에스비비테크 종목 코드
-url = f'https://finance.naver.com/item/sise_day.naver?code={code}'
-headers = {'User-Agent': 'Mozilla/5.0'}
-response = requests.get(url, headers=headers)
-
-pgrr = html.find('td', class_='pgRR')
-s = prgg.a['href'].split('=')
-last_page = s[-1]                              #마지막 페이수의 숫자 출력
-
-for  page in range(1, int(last_page)+1):
-     response = requests.get(f'{url}&page={page}', headers=headers)
-     df = pd.concat([df, pd.read_html(req.text, encoding = 'euc-kr')[0]], ignore_index = True)
-
-df.dropna(inplace = True)                      #데이터가 없는 행 삭제
-df.reset_index(drop = True, inplace = Ture)    #인덱스 재배열
 
 
-df.to_excel("Watching_list.xlsx", index = False)
+def get_stock_price(code, pages):
+    """
+    주가 데이터를 가져오는 함수입니다.
 
+    :param code: 종목 코드
+    :param pages: 페이지 수
+    :return: 주가 데이터 DataFrame
+    """
 
---------------------------------------------------------------------
+    url = f'https://finance.naver.com/item/sise_day.naver?code={code}'
+    headers = {'User-Agent': 'Mozilla/5.0'}
 
-bs = BeautifulSoup(html, 'lxml')
-pgrr = bs.find('td', class_='pgRR')
+    df = pd.DataFrame()
+    for page in range(1, pages + 1):
+        response = requests.get(f'{url}&page={page}', headers=headers)
 
+        if response.status_code == 200:
+            html = response.text
+            bs = BeautifulSoup(html, 'lxml')
+            pgrr = bs.find('td', class_='pgRR')
 
-if response.status_code == 200:
-    html = response.text
-    bs = BeautifulSoup(html, 'lxml')
-    pgrr = bs.find('td', class_='pgRR')
+            if pgrr:
+                s = pgrr.a['href'].split('=')
+                last_page = s[-1]
 
-    if pgrr:
-        s = str(pgrr.a['href']).split('=')
-        last_page = s[-1]
-
-        df = pd.DataFrame()
-        sise_url = 'https://finance.naver.com/item/sise_day.naver?code=389500'
-
-        for page in range(1, int(last_page) + 1):
-            url = '{}&page={}'.format(sise_url, page)
-            response = requests.get(url, headers=headers)
-
-            if response.status_code == 200:
-                html = response.text
                 df = df.append(pd.read_html(html, header=0)[0])
             else:
                 print(f"Failed to retrieve data for page {page}")
-        
-    else:
-        print("The 'pgRR' element was not found.")
 
-else:
-    print("Failed to retrieve the initial page.")
-    
-    
+    df['날짜'] = pd.to_datetime(df['날짜'])
+    df.dropna(inplace=True)
+    df.reset_index(drop=True, inplace=True)
+    return df
+
+
+def main():
+    """
+    main 함수입니다.
+    """
+
+    df = get_stock_price('389500', 10)
+    df.to_excel('Watching_list.xlsx', index=False)
+
+
+if __name__ == '__main__':
+    main()
+
+
+
+'''
+-------------------------------------------------------------------------
+if response.status_code == 200: 블록을 if response.status_code == 200 and pgrr: 
+ 블록으로 변경하여 pgrr 요소가 존재하는지 확인합니다.
+for page in range(1, int(last_page)+1): 
+ 블록을 for page in range(1, pages + 1): 블록으로 변경하여 반복 횟수를
+ pages 변수로 지정합니다.
+df = pd.DataFrame() 명령어를 df = pd.DataFrame() 명령어로 변경하여 df
+ 변수를 초기화합니다.
+df = df.append(pd.read_html(html, encoding = 'euc-kr')[0], ignore_index = True) 
+ 명령어를 df = df.append(pd.read_html(html, header=0)[0], ignore_index=True)
+ 명령어로 변경하여 열 이름을 자동으로 지정합니다.
+df.dropna(inplace = True) 명령어를 df.dropna(inplace=True) 명령어로 변경하여
+ inplace 인수를 True로 지정하여 데이터가 없는 행을 제거합니다.
+df.reset_index(drop = True, inplace = True) 명령어를
+ df.reset_index(drop=True, inplace=True) 명령어로 변경하여
+ inplace 인수를 True로 지정하여 인덱스를 재배열합니다.
+-------------------------------------------------------------------------
+'''
