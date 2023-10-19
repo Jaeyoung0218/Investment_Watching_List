@@ -1,0 +1,11 @@
+# kind.krx.co.kr  = 주식 상장 목록 불러오는 사이트
+
+import pandas as pd
+
+KIND_List = 'https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13'
+df = pd.read_html(KIND_List)[0]
+
+df['종목코드'] = df['종목코드'].map('{:06d}'.format)
+df = df.sort_values(by = '종목코드')
+
+df.head()                               # 데이터프레임 확인하기
